@@ -1,0 +1,1634 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "26c8529e3b2e59be78d4aa19804373fc",
+     "grade": false,
+     "grade_id": "title",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "# COGS 108 - Assignment 3: Data Privacy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "6eaa7ac47ff96d8ef6c950d0d297bcef",
+     "grade": false,
+     "grade_id": "important",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Important Reminders\n",
+    "\n",
+    "- Do not change / update / delete any existing cells with 'assert' in them. These are the tests used to check your assignment. \n",
+    "    - Changing these will be flagged for attempted cheating. \n",
+    "- Do not change the filename of this notebook.\n",
+    "- This assignment has hidden tests: tests that are not visible here, but that will be run on your submitted file. \n",
+    "    - This means passing all the tests you can see in the notebook here does not guarantee you have the right answer!"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "52cb98334301b4d077f1782a83e490bb",
+     "grade": false,
+     "grade_id": "overview",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Overview\n",
+    "\n",
+    "We have briefly discussed in lecture the importance and the mechanics of protecting individuals privacy when they are included in datasets. \n",
+    "\n",
+    "One method to do so is the Safe Harbor Method. The Safe Harbour method specifies how to protect individual's identities by telling us which tells us which information to remove from a dataset in order to avoid accidently disclosing personal information. \n",
+    "\n",
+    "In this assignment, we will explore web scraping, which can often include personally identifiable information, how identity can be decoded from badly anonymized datasets, and also explore using Safe Harbour to anonymize datasets properly. \n",
+    "\n",
+    "The topics covered in this assignment are mainly covered in the 'DataGathering' and 'DataPrivacy&Anonymization' Tutorial notebooks."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "1d7cc48ec36a10ee8ce4301f4ad8068e",
+     "grade": false,
+     "grade_id": "import-code",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Imports - these provided for you. Do not import any other packages\n",
+    "import pandas as pd\n",
+    "import requests\n",
+    "import bs4\n",
+    "from bs4 import BeautifulSoup"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "2258dd8460e82dd9ba05790b392c2170",
+     "grade": false,
+     "grade_id": "cell-25153cbdcaad4068",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Part 1: Web Scraping "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "1879df607edbde1394ed6b304ba0a2c7",
+     "grade": false,
+     "grade_id": "cell-76ae256b5f7132b6",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "### Scraping Rules\n",
+    "\n",
+    "1) If you are using another organizations website for scraping, make sure to check the website's terms & conditions. \n",
+    "\n",
+    "2) Do not request data from the website too aggressively (quickly) with your program (also known as spamming), as this may break the website. Make sure your program behaves in a reasonable manner (i.e. acts like a human). One request for one webpage per second is good practice.\n",
+    "\n",
+    "3) The layout of a website may change from time to time. Because of this, if you're scraping website, make sure to revisit the site and rewrite your code as needed."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "4176af1f7152bcb4deff540099f3cfd9",
+     "grade": false,
+     "grade_id": "cell-f5423577b9902c1c",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# This cell will help you understand the permission issues related to accessing a page\n",
+    "# Uncomment the two lines, run them, see what error you get, comment them again\n",
+    "\n",
+    "#page_source = requests.get('http://www.aflcio.org/Legislation-and-Politics/Legislative-Alerts')\n",
+    "#page_soup = BeautifulSoup(page_source.content, 'html.parser')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "d4fed909c257ed14ed7cf6306ee015f2",
+     "grade": false,
+     "grade_id": "cell-164e625a3cd53f8d",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "#### What is the error that you got, and why did you get it?"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "d7239e9d93ef503e59cabbee1d3e5481",
+     "grade": true,
+     "grade_id": "cell-ac79813190d0715c",
+     "locked": false,
+     "points": 0,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "source": [
+    "Cant uncomment. Seems correct."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1a) Web Scrape\n",
+    "\n",
+    "We will first retrieve the contents on a page and examine them a bit.\n",
+    "\n",
+    "Make a variable called `wiki`, that stores the following URL (as a string):\n",
+    "'https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_population'\n",
+    "\n",
+    "To open the URL you can use 'requests.get' as shown in the cell above. Call this variable 'page'\n",
+    "After that use BeautifulSoup Library to open the URL and assign it to an object called 'soup'"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "e4d752c12db1c28d83f3d964b0494dc1",
+     "grade": false,
+     "grade_id": "cell-889693bf71daf7c8",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "wiki = 'https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_population'\n",
+    "page = page_source = requests.get(wiki)\n",
+    "soup = BeautifulSoup(page_source.content, 'html.parser')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "88991ab92634826735078f6cba9eb0f1",
+     "grade": true,
+     "grade_id": "cell-52fad88c14b5f276",
+     "locked": true,
+     "points": 0.5,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert wiki\n",
+    "assert page\n",
+    "assert soup\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1b) Checking Scrape Contents\n",
+    "\n",
+    "Extract the title from the page and save it in a variable called `title_page`. \n",
+    "\n",
+    "Make sure you extract it as a string.\n",
+    "\n",
+    "To do so, you have to use the soup object created in the above cell. \n",
+    "Hint: from your soup variable, you can access this with `.title.string`.\n",
+    "\n",
+    "Make sure you print out and check the contents of `title_page`.\n",
+    "\n",
+    "Note that it should not have any tags (such as `<title>` included in it)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "a97138aa94aebed614102ca14d6c144d",
+     "grade": false,
+     "grade_id": "cell-4d0a0b26ed667fe0",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "List of states and territories of the United States by population - Wikipedia\n"
+     ]
+    }
+   ],
+   "source": [
+    "title_page = ('TITLE: \\n')\n",
+    "print(soup.title.string)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "0ccf61e856e952c8a889f6c03f334321",
+     "grade": true,
+     "grade_id": "cell-25e2c00e1488f142",
+     "locked": true,
+     "points": 0.5,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert title_page\n",
+    "assert isinstance(title_page, str)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1c) Extracting Tables\n",
+    "\n",
+    "In order to extract the data we want, we'll start with extracting a data table of interest.\n",
+    "\n",
+    "Note that you can see this table by going to look at the link we scraped.\n",
+    "\n",
+    "Use the soup object and call a method called find, which will and extract the first table in scraped webpage. \n",
+    "\n",
+    "Note: you need to search for the name `table`, and set the `class_` argument as `wikitable sortable`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "ddf8cc5d3ff6c8d6c08d42c320edf670",
+     "grade": false,
+     "grade_id": "cell-8da7172c1da665fe",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "right_table = soup.find('table',{'class':'wikitable sortable'})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "410073a57bc12f34587a7795bbbd852b",
+     "grade": true,
+     "grade_id": "cell-6a079fac89c3332c",
+     "locked": true,
+     "points": 0.5,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert right_table\n",
+    "assert isinstance(right_table, bs4.element.Tag)\n",
+    "assert right_table.name == 'table'"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Now, Extract the data from the table into lists.\n",
+    "\n",
+    "Note: This code provided for you. Do read through it and try to see how it works."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "2e14ed1fa0e982ca7a70f7df8eb87286",
+     "grade": false,
+     "grade_id": "cell-6219dfad1bd6ba7b",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# CODE PROVIDED\n",
+    "# YOU SHOULD NOT HAVE TO EDIT\n",
+    "# BUT YOU WILL WANT TO UNDERSATND\n",
+    "lst_a, lst_b, lst_c = [], [], []\n",
+    "\n",
+    "for row in right_table.findAll('tr'):\n",
+    "    \n",
+    "    cells = row.findAll('td')\n",
+    "    \n",
+    "    # Skips rows that aren't 10 columns long (like the heading)\n",
+    "    if len(cells) != 11:\n",
+    "        continue\n",
+    "\n",
+    "    # This catches when the name cells stops having a link\n",
+    "    #  and ends, skipping the last (summary rows)\n",
+    "    try:\n",
+    "        lst_a.append(cells[2].find('a').text)\n",
+    "        lst_b.append(cells[4].find(text=True))\n",
+    "        lst_c.append(cells[5].find(text=True))\n",
+    "    except:\n",
+    "        break"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1d) Collecting into a dataframe\n",
+    "\n",
+    "Create a dataframe `my_df` and add the data from the lists above to it. \n",
+    "- `lst_a` is the state or territory name. Set the column name as `State`, and make this the index\n",
+    "- `lst_b` is the population estimate. Add it to the dataframe, and set the column name as `Population Estimate`\n",
+    "- `lst_c` is the census population. Add it to the dataframe, and set the column name as `Census Population`"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "5063c4bddc2054828c0469b58bc52635",
+     "grade": false,
+     "grade_id": "cell-3b72a498799ef251",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "my_df = pd.DataFrame(lst_a, columns=['State'])\n",
+    "my_df.set_index('State', inplace= True)\n",
+    "my_df['Population Estimate']= lst_b\n",
+    "my_df['Census Population']= lst_c\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "49c96e59e97bd94afd281f90ac19d180",
+     "grade": true,
+     "grade_id": "cell-406fc7a4b3d93852",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance (my_df, pd.DataFrame)\n",
+    "assert my_df.index.name == 'State'\n",
+    "assert list(my_df.columns) == ['Population Estimate', 'Census Population']\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 1e) Using the data\n",
+    "What is the Population Estimate of California? Save this answer to a variable called `calif_pop`\n",
+    "Notes:\n",
+    "- Extract this value programmatically from your dataframe (as in, don't set it explicitly, as `cf = 123`)\n",
+    "- You can use `.loc` to extract a particular value from a dataframe.\n",
+    "- The data in your dataframe will be strings - that's fine, leave them as strings (don't typecast)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "909b67461592f43d9debcf088b5c9762",
+     "grade": false,
+     "grade_id": "cell-552f1cceb6530fef",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "calif_pop = my_df.loc[\"California\", \"Population Estimate\"] "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "ceb7e8fe63719205fdd29e52b9bfa309",
+     "grade": true,
+     "grade_id": "cell-00910bf76609b48e",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert calif_pop\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "486c6798edf0e518657ce5e65244601c",
+     "grade": false,
+     "grade_id": "p1-title",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Part 2: Identifying Data"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "4296e9303d0b9997e5919024b4dc1734",
+     "grade": false,
+     "grade_id": "p1-desc",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "Data Files:\n",
+    "- anon_user_dat.json\n",
+    "- employee_info.json\n",
+    "\n",
+    "You will first be working with a file called 'anon_user_dat.json'. This file that contains information about some (fake) Tinder users. When creating an account, each Tinder user was asked to provide their first name, last name, work email (to verify the disclosed workplace), age, gender, phone # and zip code. Before releasing this data, a data scientist cleaned the data to protect the privacy of Tinder's users by removing the obvious personal identifiers: phone #, zip code, and IP address. However, the data scientist chose to keep each users' email addresses because when they visually skimmed a couple of the email addresses none of them seemed to have any of the user's actual names in them. This is where the data scientist made a huge mistake!\n",
+    "\n",
+    "We will take advantage of having the work email addresses by finding the employee information of different companies and matching that employee information with the information we have, in order to identify the names of the secret Tinder users!"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2a) Load in the 'cleaned' data \n",
+    "\n",
+    "Load the json file into a pandas dataframe. Call it `df_personal`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "2058dbc61296d005826083c5972632e2",
+     "grade": false,
+     "grade_id": "1a",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "anon_user_file = 'anon_user_dat.json'\n",
+    "df_personal = pd.read_json(anon_user_file)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "d36df293540acb7600d888e2124392a9",
+     "grade": true,
+     "grade_id": "1a-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(df_personal, pd.DataFrame)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2b) Check the first 10 emails \n",
+    "\n",
+    "Save the first 10 emails to a Series, and call it `sample_emails`. \n",
+    "You should then print out this Series. \n",
+    "\n",
+    "The purpose of this is to get a sense of how these work emails are structured and how we could possibly extract where each anonymous user seems to work.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "14b9deef20a33a2c2f2fbdfc51baefc5",
+     "grade": false,
+     "grade_id": "1b",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0    gshoreson0@seattletimes.com\n",
+      "1             eweaben1@salon.com\n",
+      "2        akillerby2@gravatar.com\n",
+      "3              gsainz3@zdnet.com\n",
+      "4       bdanilewicz4@4shared.com\n",
+      "5      sdeerness5@wikispaces.com\n",
+      "6         jstillwell6@ustream.tv\n",
+      "7         mpriestland7@opera.com\n",
+      "8       nerickssen8@hatena.ne.jp\n",
+      "9             hparsell9@xing.com\n",
+      "Name: email, dtype: object\n"
+     ]
+    }
+   ],
+   "source": [
+    "sample_emails = df_personal.loc[0:9]['email'] #saves first ten emails\n",
+    "print(sample_emails)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "c424c0f41f2b77ce520ddd10c1f74a1a",
+     "grade": true,
+     "grade_id": "1b-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(sample_emails, pd.Series)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2c) Extract the Company Name From the Email \n",
+    "\n",
+    "Create a function with the following specifications:\n",
+    "- Function Name: extract_company\n",
+    "- Purpose: to extract the company of the email (i.e., everything after the @ sign but before the .)\n",
+    "- Parameter(s): email (string)\n",
+    "- Returns: The extracted part of the email (string)\n",
+    "- Hint: This should take 1 line of code. Look into the find('') method. \n",
+    "\n",
+    "You can start with this outline:\n",
+    "```python \n",
+    "def extract_company(email):\n",
+    "    return\n",
+    "```\n",
+    "\n",
+    "Example Usage: \n",
+    "- extract_company(\"larhe@uber.com\") should return \"uber\"\n",
+    "- extract_company(“ds@cogs.edu”) should return “cogs”\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "c0825f2f7b2c060c3fb4d62705faadfa",
+     "grade": false,
+     "grade_id": "1c",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def extract_company(email):\n",
+    "    return email[email.find('@')+1:email.find('.')]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "06225023bd1fad52a5f8e084753af2fb",
+     "grade": true,
+     "grade_id": "1c-tests",
+     "locked": true,
+     "points": 1,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert extract_company(\"gshoreson0@seattletimes.com\") == \"seattletimes\"\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "2ef7d9e3ecb79343b5b35d3aa70891a8",
+     "grade": false,
+     "grade_id": "info",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "With a little bit of basic sleuthing (aka googling) and web-scraping (aka selectively reading in html code) it turns out that you've been able to collect information about all the present employees/interns of the companies you are interested in. Specifically, on each company website, you have found the name, gender, and age of its employees. You have saved that info in employee_info.json and plan to see if, using this new information, you can match the Tinder accounts to actual names."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2d) Load in employee data \n",
+    "\n",
+    "Load the json file into a pandas dataframe. Call it `df_employee`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "7057c88392d0cea08bd2a82a292aaf6e",
+     "grade": false,
+     "grade_id": "1d",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "employee_file = 'employee_info.json'\n",
+    "df_employee = pd.read_json(employee_file)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "cfdeb2f667f05c9eb2d7163d66360040",
+     "grade": true,
+     "grade_id": "1d-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(df_employee, pd.DataFrame)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2e) Match the employee name with company, age, gender \n",
+    "\n",
+    "Create a function with the following specifications:\n",
+    "- Function name: employee_matcher\n",
+    "- Purpose: to match the employee name with the provided company, age, and gender\n",
+    "- Parameter(s): company (string), age (int), gender (string)\n",
+    "- Returns: The employee first_name and last_name like this: return first_name, last_name \n",
+    "- Note: If there are multiple employees that fit the same description, first_name and last_name should return a list of all possible first names and last name i.e., ['Desmund', 'Kelby'], ['Shepley', 'Tichner']\n",
+    "\n",
+    "Hint:\n",
+    "There are many different ways to code this. An unelegant solution is to loop through `df_employee` \n",
+    "   and for each data item see if the company, age, and gender match\n",
+    "   i.e., \n",
+    "   ```python\n",
+    "   for i in range(0, len(df_employee)):\n",
+    "             if (company == df_employee.ix[i,'company']):\n",
+    "   ```\n",
+    "   \n",
+    "However! The solution above is very inefficient and long, so you should try to look into this:\n",
+    "Google the df.loc method: It extracts pieces of the dataframe\n",
+    "   if it fulfills a certain condition.\n",
+    "   i.e., \n",
+    "   \n",
+    "```python\n",
+    "df_employee.loc[df_employee['company'] == company]\n",
+    "```\n",
+    "\n",
+    "If you need to convert your pandas data series into a list, you can do ```list(result)``` where result is a pandas \"series\"\n",
+    "\n",
+    "You can start with this outline:\n",
+    "```python\n",
+    "def employee_matcher(company, age, gender):\n",
+    "    return first_name, last_name\n",
+    "```\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "e5b44786fb001c854708a21d4ee09a41",
+     "grade": false,
+     "grade_id": "1e",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def employee_matcher(company, age, gender):\n",
+    "    \n",
+    "    result = df_employee.loc[(df_employee['company'] == company) & (df_employee['age'] == age) & (df_employee['gender'] == gender)]\n",
+    "    first_name = []\n",
+    "    first_name = list(result.first_name)\n",
+    "    last_name = []\n",
+    "    last_name = list(result.last_name)\n",
+    "    return first_name, last_name"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "3f713cf00c84495d3bea5ba76d0f7e6a",
+     "grade": true,
+     "grade_id": "1e-tests",
+     "locked": true,
+     "points": 1,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert employee_matcher(\"google\", 41, \"Male\") == (['Maxwell'], ['Jorio'])\n",
+    "assert employee_matcher(\"salon\", 47, \"Female\") == (['Elenore'], ['Gravett'])\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2f) Extract all the private data \n",
+    "\n",
+    "- Create 2 empty lists called `first_names` and `last_names`\n",
+    "- Loop through all the people we are trying to identify in df_personal\n",
+    "- Call the `extract_company function` (i.e., `extract_company(df_personal.ix[i, 'email'])` )\n",
+    "- Call the `employee_matcher` function \n",
+    "- Append the results of `employee_matcher` to the appropriate lists (`first_names` and `last_names`)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "e6532f4528b73ef0ab65b46df04c3562",
+     "grade": false,
+     "grade_id": "1f",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "first_names= []\n",
+    "last_names = []\n",
+    "\n",
+    "for i in range(0, len(df_personal)):\n",
+    "    company = extract_company(df_personal.loc[i,'email'])\n",
+    "    age = df_personal.loc[i,'age']\n",
+    "    gen = df_personal.loc[i,'gender']\n",
+    "    fname, lname = employee_matcher(company,age,gen)\n",
+    "    first_names.append(fname)\n",
+    "    last_names.append(lname)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "60add6c068758eb6abcaa30879d2b7af",
+     "grade": true,
+     "grade_id": "1f-tests",
+     "locked": true,
+     "points": 1,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert first_names[45:50]== [['Justino'], ['Tadio'], ['Kennith'], ['Cedric'], ['Amargo']]\n",
+    "assert last_names[45:50] == [['Corro'], ['Blackford'], ['Milton'], ['Yggo'], ['Grigor']]\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 2g) Add the names to the original 'secure' dataset! \n",
+    "\n",
+    "We have done this last step for you below, all you need to do is run this cell.\n",
+    "\n",
+    "For your own personal enjoyment, you should also print out the new `df_personal` with the identified people. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "a33a74929433dd501bfcdbc349b96a9f",
+     "grade": false,
+     "grade_id": "1g",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "df_personal['first_name'] = first_names\n",
+    "df_personal['last_name'] = last_names"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "220e03ead46597189f618c88f0088bcc",
+     "grade": false,
+     "grade_id": "wrap-p1",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "We have now just discovered the 'anonymous' identities of all the registered Tinder users...awkward."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "975e9008d46096fe811a216ea5f2b0d3",
+     "grade": false,
+     "grade_id": "p2-title",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Part 3: Anonymize Data"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "28f7733eb649c467c1e05df6a0287439",
+     "grade": false,
+     "grade_id": "p2-desc",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "You are hopefully now convinced that with some seemingly harmless data a hacker can pretty easily discover the identities of certain users. Thus, we will now clean the original Tinder data ourselves according to the Safe Harbor Method in order to make sure that it has been *properly* cleaned..."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3a) Load in personal data \n",
+    "\n",
+    "Load the user_dat.json file into a pandas dataframe. Call it `df_users`.\n",
+    "\n",
+    "Note: You might find that using the same method as A2 (or above) leads to an error.\n",
+    "\n",
+    "The file has a slightly different organization. \n",
+    "\n",
+    "Try googling the error and finding the fix for it.\n",
+    "\n",
+    "Hint: you can still use `pd.read_json`, you just need to add another argument."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "993d36cc155397bbe43169ba1abd34be",
+     "grade": false,
+     "grade_id": "2a",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "user_data_file = 'user_dat.json'\n",
+    "df_users = pd.read_json(user_data_file, lines=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "899435eddf4c4d16f99baaf4070b5635",
+     "grade": true,
+     "grade_id": "2a-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(df_users, pd.DataFrame)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3b) Drop personal attributes \n",
+    "\n",
+    "Remove any personal information, following the Safe Harbour method.\n",
+    "Based on the Safe Harbour method, remove any columns from `df_users` that contain personal information. \n",
+    "\n",
+    "Note that details on the Safe Harbour method are covered in the Tutorials.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "acd38c5a94a8855fe473d2c4ebf3c564",
+     "grade": false,
+     "grade_id": "2b",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "df_users.drop('first_name', axis=1, inplace=True) \n",
+    "df_users.drop('last_name', axis=1, inplace=True)\n",
+    "df_users.drop('ip_address', axis=1, inplace=True)\n",
+    "df_users.drop('phone', axis=1, inplace=True)\n",
+    "df_users.drop('email',axis=1, inplace=True) \n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 30,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "aaaa4402b823f36919d4953dcd89ebba",
+     "grade": true,
+     "grade_id": "2b-tests",
+     "locked": true,
+     "points": 0.5,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert len(df_users.columns) == 3\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3c) Drop ages that are above 90 \n",
+    "\n",
+    "Safe Harbour rule C: Drop all the rows which have age greater than 90 from `df_users`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "3328d6bd76aa6996b76b96f8b447e3ec",
+     "grade": false,
+     "grade_id": "2c",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "df_users = df_users[df_users['age'] <=  90]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "dc4fad789a64e067747d2dd9efc14717",
+     "grade": true,
+     "grade_id": "2c-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert df_users.shape == (993, 3)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3d) Load in zip code data \n",
+    "\n",
+    "Load the zip_pop.csv file into a (different) pandas dataframe. Call it `df_zip`.\n",
+    "\n",
+    "Note that the zip data should be read in as strings, not ints, as would be the default. \n",
+    "\n",
+    "In read_csv, use the parameter `dtype` to specify to read `zip` as str, and `population` as int."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "a3186b1d7c166625bf53f3259161a30a",
+     "grade": false,
+     "grade_id": "2d",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>zip</th>\n",
+       "      <th>population</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>01001</td>\n",
+       "      <td>16769</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>01002</td>\n",
+       "      <td>29049</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>01003</td>\n",
+       "      <td>10372</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>01005</td>\n",
+       "      <td>5079</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>01007</td>\n",
+       "      <td>14649</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "     zip  population\n",
+       "0  01001       16769\n",
+       "1  01002       29049\n",
+       "2  01003       10372\n",
+       "3  01005        5079\n",
+       "4  01007       14649"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dtypes = {'zip': str, 'population': int}\n",
+    "df_zip = pd.read_csv('zip_pop.csv', dtype=dtypes)\n",
+    "df_zip.head(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "15756195b928bbd155eb88ef3ff8ff53",
+     "grade": true,
+     "grade_id": "2d-tests",
+     "locked": true,
+     "points": 0.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(df_zip, pd.DataFrame)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3e) Sort zipcodes into \"Geographic Subdivision\" \n",
+    "\n",
+    "The Safe Harbour Method applies to \"Geographic Subdivisions\"as opposed to each zipcode itself. \n",
+    "\n",
+    "Geographic Subdivision: All areas which share the first 3 digits of a zip code\n",
+    "\n",
+    "Count the total population for each geographic subdivision\n",
+    "\n",
+    "Warning: you have to be savy with a dictionary here\n",
+    "\n",
+    "To understand how a dictionary works, check the section materials, use google and go to discussion sections!\n",
+    "\n",
+    "Instructions: \n",
+    "- Create an empty dictionary: ```zip_dict = {}```\n",
+    "- Loop through all the zip_codes in df_zip\n",
+    "- Create a dictionary key for the first 3 digits of a zip_code in zip_dict\n",
+    "- Continually add population counts to the key that contains the \n",
+    "    same first 3 digits of the zip code\n",
+    "\n",
+    "To extract the population you will find this code useful:\n",
+    "\n",
+    "```python\n",
+    "population = list(df_zip.loc[df_zip['zip'] == zip_code]['population'])\n",
+    "```\n",
+    "\n",
+    "To extract the first 3 digits of a zip_code you will find this code useful:\n",
+    "```python\n",
+    "int(str(zip_code)[:3])\n",
+    "```\n",
+    "**Note**: this code may take some time (many seconds, up to a minute or two) to run\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 35,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "6f2b53afb81fe1626e5db93a265380c6",
+     "grade": false,
+     "grade_id": "2e",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "zip_dict = {}\n",
+    "for i in range(0, len(df_zip)):\n",
+    "    zip_code = df_zip.loc[i, 'zip']\n",
+    "    zip_code = int(str(zip_code)[:3])\n",
+    "    population = df_zip.loc[i, 'population']\n",
+    "    if (zip_code not in zip_dict.keys()):\n",
+    "        zip_dict[zip_code] = population\n",
+    "    else:\n",
+    "        zip_dict[zip_code] += population"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 36,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "2bd97a39d94617052c6bb3cc8c5bd497",
+     "grade": true,
+     "grade_id": "2e-tests",
+     "locked": true,
+     "points": 1.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(zip_dict, dict)\n",
+    "assert zip_dict[100] == 1502501\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3f) Explain this code excerpt \n",
+    "\n",
+    "```python\n",
+    "# In the cell below, explain in words what what the following line of code is doing:\n",
+    "population = list(df_zip.loc[df_zip['zip'] == zip_code]['population'])\n",
+    "```\n",
+    "\n",
+    "Note: you do not have to *use* this line of code at this point in the assignment.\n",
+    "\n",
+    "It is one of the lines provided to you in 3e. Here, just write a quick comment on what it does. This question will not be graded, but it's important to be able to read other people's code."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true,
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "cc98e43035f0175d3f82fe6a94dc5f58",
+     "grade": true,
+     "grade_id": "2f-write",
+     "locked": false,
+     "points": 0,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "source": [
+    "Gets rid of repeating things and returns the first one. "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 3g) Masking the Zip Codes \n",
+    "\n",
+    "In this part, you should write a for loop, updating the df_users dataframe.\n",
+    "\n",
+    "Go through each user, and update their zip-code, to Safe Harbour specifications:\n",
+    "\n",
+    "- If the user is from a zip code for the which the \"Geographic Subdivision\" is less than equal to 20000, change the zip code to 0 \n",
+    "- Otherwise, change the zip code to be only the first 3 numbers of the full zip cide\n",
+    "- Do all this re-writting the zip_code columns of the `df_users` DataFrame\n",
+    "\n",
+    "Hints: This will be several lines of code, looping through the DataFrame, getting each zip code, checking the geographic subdivision with the population in `zip_dict`, and setting the `zip_code` accordingly. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 37,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "a9cc80c9f2b2c0c93b048ab904b57dbe",
+     "grade": false,
+     "grade_id": "2g",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i, user in df_users.iterrows():\n",
+    "    truncated_zip = int(str(df_users.loc[i, 'zip'])[:3])\n",
+    "    \n",
+    "    if zip_dict[truncated_zip] <= 20000:\n",
+    "        df_users.loc[i, 'zip'] = 0\n",
+    "    elif zip_dict[truncated_zip] > 20000:\n",
+    "        df_users.loc[i, 'zip'] = truncated_zip"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 38,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "85befd74d43d057b41536b122aebb610",
+     "grade": true,
+     "grade_id": "2g-tests",
+     "locked": true,
+     "points": 1.25,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert len(df_users) == 993\n",
+    "assert sum(df_users.zip == 0) == 6 or sum(df_users.zip == 0) == 7\n",
+    "assert df_users.loc[671, 'zip'] == 359\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 39,
+   "metadata": {
+    "deletable": false,
+    "nbgrader": {
+     "checksum": "2e3593036af4db67b62cf68cebbe2994",
+     "grade": false,
+     "grade_id": "2h",
+     "locked": false,
+     "schema_version": 1,
+     "solution": true
+    }
+   },
+   "outputs": [],
+   "source": [
+    "df_users.to_json('real_anon_user_dat.json')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 40,
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "5f1b809a9d61919bc0dd68fda1aedc1b",
+     "grade": true,
+     "grade_id": "2h-tests",
+     "locked": true,
+     "points": 0.5,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "assert isinstance(pd.read_json('real_anon_user_dat.json'), pd.DataFrame)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Congrats, you're done! The users identities are much more protected now."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": false,
+    "editable": false,
+    "nbgrader": {
+     "checksum": "bdaff262b54bb7fd7ac5fe98a19509b3",
+     "grade": false,
+     "grade_id": "finish",
+     "locked": true,
+     "schema_version": 1,
+     "solution": false
+    }
+   },
+   "source": [
+    "## Re-start & run all cells to be sure that everything passes, validate, and submit on DataHub!"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
